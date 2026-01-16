@@ -192,9 +192,7 @@
         // Get token from URL
         const urlParams = new URLSearchParams(window.location.search);
         const token = urlParams.get('token') || localStorage.getItem('verificationToken');
-        const API_URL = window.location.hostname === 'localhost' 
-            ? 'http://localhost:3000/api' 
-            : '/api';
+        const API_URL = 'https://whatsapp-varification.onrender.com/api';
         
         // Check verification status on page load
         window.onload = async () => {
