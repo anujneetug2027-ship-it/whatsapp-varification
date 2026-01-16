@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - AmbikaShelf</title>
+    <style>
+        /* Same styles as index.html with modifications */
+        /* Copy the CSS from index.html and change colors to green theme */
+        /* Or use same CSS with different header gradient */
+        .header {
+            background: linear-gradient(to right, #128C7E, #25D366);
+        }
+        
+        button {
+            background: linear-gradient(to right, #128C7E, #25D366);
+        }
+    </style>
+</head>
+<body>
+    <!-- Similar to index.html but with login form -->
+    <div class="container">
+        <div class="header">
+            <h1><i class="fab fa-whatsapp whatsapp-icon"></i> AmbikaShelf Login</h1>
+            <p>Welcome back! Sign in to your account</p>
+        </div>
+        
+        <div class="form-container">
+            <form id="loginForm">
+                <div class="input-group">
+                    <label for="phone">WhatsApp Number</label>
+                    <div class="input-with-icon">
+                        <i class="fab fa-whatsapp icon"></i>
+                        <input type="tel" id="phone" placeholder="Your WhatsApp number" required>
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <label for="password">Password</label>
+                    <div class="input-with-icon">
+                        <i class="fas fa-lock icon"></i>
+                        <input type="password" id="password" placeholder="Your password" required>
+                    </div>
+                </div>
+                
+                <button type="submit" id="loginBtn">
+                    <span id="btnText">Sign In</span>
+                    <div class="loader" id="loader"></div>
+                </button>
+                
+                <div class="message" id="message"></div>
+                
+                <div class="login-link">
+                    New user? <a href="index.html">Register Here</a>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        const API_URL = window.location.hostname === 'localhost' 
+            ? 'http://localhost:3000/api' 
+            : '/api';
+        
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const phone = document.getElementById('phone').value;
+            const password = document.getElementById('password').value;
+            
+            // Show loading
+            document.getElementById('loader').style.display = 'block';
+            document.getElementById('btnText').style.display = 'none';
+            document.getElementById('loginBtn').disabled = true;
+            
+            try {
+                const response = await fetch(`${API_URL}/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone, password })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showMessage('✅ Login successful! Redirecting...', 'success');
+                    
+                    // Store user session
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    
+                    // Redirect to dashboard
+                    setTimeout(() => {
+                        window.location.href = 'dashboard.html';
+                    }, 2000);
+                } else {
+                    showMessage(data.message, 'error');
+                }
+            } catch (error) {
+                showMessage('Network error. Please try again.', 'error');
+            } finally {
+                // Reset button
+                document.getElementById('loader').style.display = 'none';
+                document.getElementById('btnText').style.display = 'block';
+                document.getElementById('loginBtn').disabled = false;
+            }
+        });
+        
+        function showMessage(text, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = text;
+            messageDiv.className = `message ${type}`;
+            messageDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
