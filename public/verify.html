@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Account - AmbikaShelf</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 500px;
+            padding: 40px;
+            text-align: center;
+        }
+        
+        .icon {
+            font-size: 80px;
+            color: #25D366;
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+        
+        p {
+            color: #666;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+        
+        .user-info {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: left;
+        }
+        
+        .user-info div {
+            margin: 10px 0;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .label {
+            font-weight: 600;
+            color: #555;
+        }
+        
+        button {
+            background: linear-gradient(to right, #25D366, #128C7E);
+            color: white;
+            border: none;
+            padding: 18px;
+            width: 100%;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.3s;
+            margin-top: 20px;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(37, 211, 102, 0.3);
+        }
+        
+        .success {
+            background: linear-gradient(to right, #4f46e5, #7c3aed);
+        }
+        
+        .explore-btn {
+            background: linear-gradient(to right, #FF6B6B, #FF8E53);
+            margin-top: 10px;
+        }
+        
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #25D366;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .message {
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            display: none;
+        }
+        
+        .success-msg {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+            display: block;
+        }
+        
+        .error-msg {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+            display: block;
+        }
+        
+        .resend {
+            margin-top: 20px;
+            color: #666;
+        }
+        
+        .resend a {
+            color: #4f46e5;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        
+        .resend a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="icon">
+            <i class="fab fa-whatsapp"></i>
+        </div>
+        
+        <h1>Verify Your Account</h1>
+        <p>Please confirm that you want to verify this account with AmbikaShelf</p>
+        
+        <div id="userDetails" class="user-info" style="display: none;">
+            <div>
+                <span class="label">Name:</span>
+                <span id="userName"></span>
+            </div>
+            <div>
+                <span class="label">Phone:</span>
+                <span id="userPhone"></span>
+            </div>
+        </div>
+        
+        <div id="message" class="message"></div>
+        
+        <button id="verifyBtn" onclick="verifyAccount()">
+            <i class="fas fa-check-circle"></i>
+            <span id="btnText">Yes, It's Me - Verify Account</span>
+            <div id="loader" class="loader" style="display: none;"></div>
+        </button>
+        
+        <button id="exploreBtn" class="explore-btn" onclick="window.open('https://ambikashelf.com', '_blank')" style="display: none;">
+            <i class="fas fa-rocket"></i>
+            Explore AmbikaShelf Now
+        </button>
+        
+        <div class="resend">
+            Problem with verification? <a href="index.html">Register Again</a>
+        </div>
+    </div>
+    
+    <script>
+        // Get token from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token') || localStorage.getItem('verificationToken');
+        const API_URL = window.location.hostname === 'localhost' 
+            ? 'http://localhost:3000/api' 
+            : '/api';
+        
+        // Check verification status on page load
+        window.onload = async () => {
+            if (token) {
+                try {
+                    const response = await fetch(`${API_URL}/check-verification/${token}`);
+                    const data = await response.json();
+                    
+                    if (data.exists) {
+                        document.getElementById('userDetails').style.display = 'block';
+                        document.getElementById('userName').textContent = data.name;
+                        document.getElementById('userPhone').textContent = data.phone;
+                        
+                        if (data.isVerified) {
+                            showMessage('Account already verified! You can login now.', 'success-msg');
+                            document.getElementById('verifyBtn').style.display = 'none';
+                            document.getElementById('exploreBtn').style.display = 'block';
+                        }
+                    } else {
+                        showMessage('Invalid verification link. Please register again.', 'error-msg');
+                        document.getElementById('verifyBtn').disabled = true;
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                }
+            } else {
+                showMessage('No verification token found.', 'error-msg');
+                document.getElementById('verifyBtn').disabled = true;
+            }
+        };
+        
+        async function verifyAccount() {
+            if (!token) return;
+            
+            // Show loading
+            document.getElementById('loader').style.display = 'inline-block';
+            document.getElementById('btnText').style.display = 'none';
+            document.getElementById('verifyBtn').disabled = true;
+            
+            try {
+                const response = await fetch(`${API_URL}/verify`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showMessage('✅ Account verified successfully! Redirecting...', 'success-msg');
+                    
+                    // Show explore button
+                    document.getElementById('exploreBtn').style.display = 'block';
+                    document.getElementById('verifyBtn').classList.add('success');
+                    document.getElementById('verifyBtn').innerHTML = '<i class="fas fa-check"></i> Verified Successfully';
+                    
+                    // Redirect to login after 3 seconds
+                    setTimeout(() => {
+                        window.location.href = 'login.html';
+                    }, 3000);
+                } else {
+                    showMessage(data.message, 'error-msg');
+                    document.getElementById('verifyBtn').disabled = false;
+                }
+            } catch (error) {
+                showMessage('Network error. Please try again.', 'error-msg');
+                document.getElementById('verifyBtn').disabled = false;
+            } finally {
+                document.getElementById('loader').style.display = 'none';
+                document.getElementById('btnText').style.display = 'inline';
+            }
+        }
+        
+        function showMessage(text, className) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = text;
+            messageDiv.className = `message ${className}`;
+            messageDiv.style.display = 'block';
+        }
+    </script>
+    
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+</body>
+</html>
